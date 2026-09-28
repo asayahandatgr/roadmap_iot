@@ -1,8 +1,9 @@
 {
+  "outputDirectory": ".",
   "rewrites": [
     {
       "source": "/",
-      "destination": "/Roadmap Smart Motorcycle Parking.html"
+      "destination": "/index.html"
     }
   ]
 }
