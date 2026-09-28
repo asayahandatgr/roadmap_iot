@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Roadmap Smart Motorcycle Parking</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f4f6fa;--card:#fff;--ink:#0b1f3a;--mut:#5b6b82;--line:#e2e8f0;--blue:#2563eb;--green:#16a34a;--gate:#eff6ff;
+--A:#2563eb;--B:#9333ea;--C:#16a34a;--X:#64748b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1220;--card:#111a2e;--ink:#e8eefc;--mut:#94a3b8;--line:#22304d;--gate:#12213f}}
+:root[data-theme="dark"]{--bg:#0b1220;--card:#111a2e;--ink:#e8eefc;--mut:#94a3b8;--line:#22304d;--gate:#12213f}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Calibri,"Segoe UI",system-ui,sans-serif;line-height:1.45}
+main{max-width:860px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:26px;margin:8px 0 2px}
+.sub{color:var(--mut);margin:0 0 16px;font-size:14px}
+.top{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding:8px 0 10px;z-index:5}
+.bar{height:10px;background:var(--line);border-radius:8px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--green);transition:width .25s}
+.pct{font-size:13px;color:var(--mut);margin:6px 0}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.filters button{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:5px 12px;border-radius:99px;font:inherit;font-size:13px;cursor:pointer}
+.filters button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.ph{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0}
+.ph h2{margin:0;font-size:18px}
+.wk{font-size:12px;color:var(--blue);font-weight:700;text-transform:uppercase}
+.goal{color:var(--mut);font-size:14px;margin:2px 0 10px}
+.t{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--line);cursor:pointer}
+.t input{margin-top:3px;width:18px;height:18px;flex:none;accent-color:var(--green)}
+.t.done span.tx{text-decoration:line-through;color:var(--mut)}
+.b{flex:none;font-size:11px;font-weight:700;color:#fff;border-radius:6px;padding:1px 7px;margin-top:2px;min-width:52px;text-align:center}
+.b.A{background:var(--A)}.b.B{background:var(--B)}.b.C{background:var(--C)}.b.X{background:var(--X)}
+.gate{background:var(--gate);border-radius:10px;padding:8px 10px;margin-top:10px}
+.gate b{font-size:12px;color:var(--blue);text-transform:uppercase}
+.gate .t{border:0;padding:3px 0}
+.risk li{margin:4px 0}
+.note{font-size:13px;color:var(--mut)}
+button.reset{margin-top:8px;background:none;border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:4px 10px;font:inherit;font-size:12px;cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+<h1>Roadmap Smart Motorcycle Parking</h1>
+<p class="sub">Simulasi Wokwi · ESP32 + 2× HC-SR04 · ML di ESP32 · 8 minggu. A = Tegar (Hardware/Firmware), B = Ibrahim (ML), C = Perdi (Web).</p>
+<div class="top">
+  <div class="bar"><i id="fill"></i></div>
+  <div class="pct" id="pct"></div>
+  <div class="filters" id="filters"></div>
+</div>
+<div id="app"></div>
+<div class="ph risk">
+  <h2>Risiko yang perlu dijaga</h2>
+  <ul>
+    <li><b>Kontrak data berubah di tengah jalan</b> → kunci di Fase 0; kalau berubah, umumkan ke semua anggota.</li>
+    <li><b>Backend gratisan tidur/lambat</b> → siapkan video demo cadangan.</li>
+    <li><b>ML memakan waktu di akhir</b> → versi tanpa ML harus utuh di Gerbang 2 sebagai jaring pengaman.</li>
+    <li><b>Model terlalu besar untuk ESP32</b> → decision tree dengan max_depth kecil.</li>
+  </ul>
+  <p class="note">Kebiasaan yang membantu: checkpoint 10–15 menit tiap minggu — "sudah jadi apa, macet di mana, butuh apa dari yang lain".</p>
+  <button class="reset" id="reset">Reset semua centang</button>
+</div>
+</main>
+<script>
+var W={A:"A · Tegar",B:"B · Ibrahim",C:"C · Perdi",X:"Semua"};
+var P=[
+{w:"Minggu 1",t:"Fase 0 — Persiapan bersama",g:"Semua sepakat soal hal yang dipakai bersama sebelum kerja paralel.",
+ k:[["X","Buat repo Git dengan folder firmware/, ml/, backend/, dashboard/, docs/"],
+    ["X","Buat project Wokwi bersama (ESP32 DevKit + 2 HC-SR04), simpan sketch.ino & diagram.json di repo"],
+    ["X","Kunci kontrak data: JSON kejadian {masuk, keluar, di_dalam, waktu}, endpoint POST /api/event dan GET /api/status"],
+    ["X","Kunci fitur ML (durasi A, durasi B, selisih A→B, jeda antar kejadian) dan kelas (0 masuk, 1 keluar, 2 anomali)"],
+    ["X","Putuskan jenis sensor dan ambang deteksi (mis. jarak < 100 cm); hapus tanda (???) di slide 8"]],
+ e:["Kontrak data tertulis di docs/ dan disetujui 3 orang"]},
+{w:"Minggu 1–2",t:"Fase 1 — Fondasi paralel",g:"Tiap anggota membangun bagiannya sendiri tanpa saling menunggu.",
+ k:[["A","Rangkai ESP32 + Sensor A dan Sensor B di Wokwi"],
+    ["A","Buat fungsi bacaJarak() yang bisa memakai nilai asli atau nilai simulasi (flag SIMULASI)"],
+    ["A","Tampilkan pembacaan sensor di Serial Monitor, cek dengan slider sensor"],
+    ["B","Tulis generator data sintetis: masuk, keluar, pelan, berhenti, berpapasan, noise (berlabel otomatis)"],
+    ["B","Pisahkan data latih dan data uji; buat baseline rule-based (threshold biasa)"],
+    ["C","Buat backend + database, endpoint POST /api/event"],
+    ["C","Uji endpoint dengan curl/Postman memakai data dummy"],
+    ["C","Buat kerangka dashboard yang membaca GET /api/status"]],
+ e:["Sensor terbaca di Wokwi","Backend menyimpan data dummy","Dataset sintetis sudah jadi"]},
+{w:"Minggu 3–4",t:"Fase 2 — Logika inti (tanpa ML dulu)",g:"Sistem utuh yang bekerja tanpa ML sebagai jaring pengaman.",
+ k:[["A","Buat state machine: IDLE → salah satu sensor terpicu → kedua terpicu → selesai → emit kejadian, plus timeout"],
+    ["A","Hitung fitur tiap kejadian dengan millis()"],
+    ["A","Hitung masuk / keluar / di_dalam tanpa ML"],
+    ["A","Buat mode simulasi: skenario terprogram (masuk, keluar, pelan, berhenti, berpapasan, noise)"],
+    ["B","Latih DecisionTreeClassifier (max_depth kecil)"],
+    ["B","Evaluasi: confusion matrix, precision, recall per kelas; bandingkan dengan baseline"],
+    ["B","Ekspor model.h dengan micromlgen"],
+    ["C","Dashboard lengkap sesuai slide 10: kapasitas, masuk, keluar, di dalam, slot, persentase, status"],
+    ["C","Auto-refresh (polling tiap beberapa detik)"],
+    ["C","Deploy backend ke URL publik (bukan localhost)"]],
+ e:["Sistem tanpa ML menghitung benar di Wokwi","Model punya skor evaluasi","Dashboard live dengan data dummy"]},
+{w:"Minggu 5–6",t:"Fase 3 — Integrasi",g:"Menyambungkan firmware, ML, backend, dan dashboard.",
+ k:[["A","Masukkan model.h ke project Wokwi, panggil predict() setelah tiap kejadian selesai"],
+    ["B","Pastikan hanya kelas 0 dan 1 yang mengubah hitungan; kelas 2 dicatat tetapi tidak dihitung"],
+    ["A","Tambah flag PAKAI_ML agar ML bisa dimatikan/dinyalakan untuk perbandingan"],
+    ["A","Sambungkan ESP32 ke WiFi simulasi Wokwi-GUEST dan kirim JSON dengan HTTPClient"],
+    ["C","Tangani gagal kirim (retry) supaya hitungan tidak hilang"],
+    ["X","Uji end-to-end: angka di Serial Monitor sama dengan angka di dashboard"]],
+ e:["Alur penuh jalan: sensor → ESP32 (arah → ML → hitung) → WiFi → backend → dashboard"]},
+{w:"Minggu 7",t:"Fase 4 — Pengujian dan evaluasi",g:"Bukti bahwa sistem dan ML bekerja, dengan angka.",
+ k:[["X","Jalankan 7 skenario (masuk, keluar, berhenti, berpapasan, noise, beruntun cepat, kapasitas penuh/kosong), 30–50 kejadian tiap skenario"],
+    ["X","Ulangi semua skenario dengan PAKAI_ML=false lalu PAKAI_ML=true"],
+    ["B","Susun tabel akurasi penghitungan dan confusion matrix; laporkan apa adanya kalau selisihnya kecil"],
+    ["A","Kalibrasi ambang jarak sensor"],
+    ["C","Uji batas: hitungan tidak negatif, tidak melebihi kapasitas, status Available/Nearly Full/Full benar"],
+    ["X","Perbaiki bug yang ditemukan"]],
+ e:["Tabel perbandingan tanpa ML vs dengan ML siap dipertanggungjawabkan"]},
+{w:"Minggu 8",t:"Fase 5 — Finalisasi",g:"Dokumen, demo, dan presentasi.",
+ k:[["X","Perbarui slide dengan hasil nyata: angka akurasi, tangkapan layar Wokwi, screenshot dashboard, arsitektur final"],
+    ["X","Tambahkan di slide 13 bahwa validasi dilakukan pada simulasi"],
+    ["X","Rekam video demo cadangan"],
+    ["X","Tulis README repo (cara menjalankan) dan laporan"],
+    ["X","Latihan presentasi; tiap anggota siap menjawab \"kalau ML dihapus, apa yang berubah?\""]],
+ e:["Siap presentasi"]}
+];
+var KEY="roadmap-smart-parking-v1",S={},flt="all";
+try{S=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){S={}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;")}
+function row(id,who,txt,cls){
+  return '<label class="t '+(S[id]?'done':'')+'" data-w="'+who+'"><input type="checkbox" data-id="'+id+'" '+(S[id]?'checked':'')+'>'
+   +(who?'<span class="b '+who+'">'+W[who]+'</span>':'')+'<span class="tx">'+esc(txt)+'</span></label>';
+}
+function render(){
+  var h="",tot=0,dn=0;
+  P.forEach(function(p,i){
+    h+='<section class="ph"><div class="wk">'+p.w+'</div><h2>'+p.t+'</h2><p class="goal">'+p.g+'</p>';
+    p.k.forEach(function(k,j){
+      var id=i+"-"+j; tot++; if(S[id])dn++;
+      if(flt==="all"||k[0]===flt||k[0]==="X") h+=row(id,k[0],k[1]);
+    });
+    h+='<div class="gate"><b>Gerbang ke fase berikutnya</b>';
+    p.e.forEach(function(g,j){var id=i+"-g"+j; tot++; if(S[id])dn++; h+=row(id,"",g)});
+    h+='</div></section>';
+  });
+  document.getElementById("app").innerHTML=h;
+  var pc=tot?Math.round(dn*100/tot):0;
+  document.getElementById("fill").style.width=pc+"%";
+  document.getElementById("pct").textContent=dn+" dari "+tot+" item selesai ("+pc+"%)";
+}
+function filters(){
+  var f=document.getElementById("filters"),o=[["all","Semua"],["A",W.A],["B",W.B],["C",W.C]];
+  f.innerHTML=o.map(function(x){return '<button data-f="'+x[0]+'" class="'+(flt===x[0]?'on':'')+'">'+x[1]+'</button>'}).join("");
+}
+document.getElementById("filters").addEventListener("click",function(e){
+  var f=e.target.getAttribute("data-f"); if(!f)return; flt=f; filters(); render();
+});
+document.getElementById("app").addEventListener("change",function(e){
+  var id=e.target.getAttribute("data-id"); if(!id)return;
+  if(e.target.checked)S[id]=1; else delete S[id]; save(); render();
+});
+document.getElementById("reset").addEventListener("click",function(){S={};save();render()});
+filters();render();
+</script>
+</body>
+</html>
